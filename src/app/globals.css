@@ -31,3 +31,18 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+svg {
+  display: inline ;
+}
+
+.swiper {
+  padding-top: 50px !important;
+}
+
+
+
+
+.range-slider__thumb , .range-slider__range {
+  background-color: black !important;
+}
