@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import React, { useEffect, useRef, useState } from "react";
 import {
   FiBold,
   FiItalic,
@@ -14,6 +15,12 @@ import {
   FiEye,
 } from "react-icons/fi";
 
+const InitializedMDXEditor = dynamic(
+  () => import("@/components/Editor/Editor"),
+  {
+    ssr: false,
+  },
+);
 const AddProductPage = () => {
   // 1. State for MDX editor value
   const [mdxContent, setMdxContent] = useState("");
@@ -22,44 +29,56 @@ const AddProductPage = () => {
   const [discounttedPrice, setDiscounttedPrice] = useState(0);
   const [discounttedPercent, setDiscounttedPercent] = useState(0);
 
+  const ref = useRef()
 
-  const handlechangeDicoutPercent = (el) => {
-    if(el.code == "enter") {
-        console.log("enter pressse");
+  const handleChangePrice = (e) => {
+    let discountedPriceValue = Number(e.target.value);
+
+    if (!originalPrice) return;
+
+    if (discountedPriceValue > originalPrice) {
+      discountedPriceValue = originalPrice;
     }
-    else {
-        return
+
+    setDiscounttedPrice(discountedPriceValue);
+
+    let discountRate =
+      ((originalPrice - discountedPriceValue) / originalPrice) * 100;
+
+    setDiscounttedPercent(discountRate.toFixed(2));
+  };
+
+  const handleChangePercent = (e) => {
+    let discountPercentRate = e.target.value;
+    setDiscounttedPercent(discountPercentRate);
+
+    let discountAmount =
+      originalPrice - originalPrice * (discountPercentRate / 100);
+
+    setDiscounttedPrice(discountAmount.toFixed(2));
+  };
+
+  const handleChangeOriginalPrice = (e) => {
+    let originalPrice = e.target.value;
+    setOriginalPrice(originalPrice);
+
+    if (discounttedPercent) {
+      let discountAmount =
+        originalPrice - originalPrice * (discounttedPercent / 100);
+      setDiscounttedPrice(discountAmount);
     }
-    
-  }
-
-
-//   useEffect(() => {
-
-//     if(discounttedPrice) {
-//         let discount = ((originalPrice - (discounttedPrice || 0))/originalPrice) * 100
-//        setDiscounttedPercent(discount)
-//     }
-//     else if (discounttedPercent) {
-//         let discountPer = originalPrice * (discounttedPercent/100)
-//         setDiscounttedPrice(discountPer)
-//     }
-//   } , [discounttedPrice , originalPrice , discounttedPercent])
-
-
-
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // 2. Extract values using e.target.<name>.value and state for MDX
+   
     const productData = {
       product_name: e.target.product_name.value,
       short_description: e.target.short_description.value,
-      long_description_mdx: mdxContent, // from state
-      original_price: e.target.original_price.value,
-      discount_price: e.target.discount_price.value,
-      discount: e.target.discount.value,
+      long_description_mdx: ref.current?.getMarkdown(), 
+      original_price: originalPrice,
+      discount_price: discounttedPrice,
+      discount: discounttedPercent,
       size: e.target.size.value,
       color: e.target.color.value,
       rating: e.target.rating.value,
@@ -98,7 +117,7 @@ const AddProductPage = () => {
             </button>
             {/* Changed type to submit */}
             <button
-            //   type="submit"
+              //   type="submit"
               className="px-5 py-2 text-sm font-medium text-white bg-neutral-950 rounded-lg hover:bg-neutral-800 transition-colors shadow-sm"
             >
               Publish Product
@@ -169,72 +188,10 @@ const AddProductPage = () => {
               </div>
 
               {/* Editor Container */}
-              <div className="border border-neutral-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-neutral-900 focus-within:border-transparent transition">
-                {/* Toolbar */}
-                <div className="flex flex-wrap items-center gap-1 p-2 bg-neutral-50 border-b border-neutral-200 text-neutral-600">
-                  <button
-                    type="button"
-                    title="Bold"
-                    className="p-1.5 hover:bg-white hover:text-black rounded border border-transparent hover:border-neutral-200 transition"
-                  >
-                    <FiBold className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    title="Italic"
-                    className="p-1.5 hover:bg-white hover:text-black rounded border border-transparent hover:border-neutral-200 transition"
-                  >
-                    <FiItalic className="w-4 h-4" />
-                  </button>
-                  <div className="w-[1px] h-4 bg-neutral-300 mx-1" />
-                  <button
-                    type="button"
-                    title="Bullet List"
-                    className="p-1.5 hover:bg-white hover:text-black rounded border border-transparent hover:border-neutral-200 transition"
-                  >
-                    <FiList className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    title="Code Block"
-                    className="p-1.5 hover:bg-white hover:text-black rounded border border-transparent hover:border-neutral-200 transition"
-                  >
-                    <FiCode className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    title="Insert Link"
-                    className="p-1.5 hover:bg-white hover:text-black rounded border border-transparent hover:border-neutral-200 transition"
-                  >
-                    <FiLink className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    title="Insert Image"
-                    className="p-1.5 hover:bg-white hover:text-black rounded border border-transparent hover:border-neutral-200 transition"
-                  >
-                    <FiImage className="w-4 h-4" />
-                  </button>
 
-                  <div className="ml-auto flex items-center">
-                    <button
-                      type="button"
-                      className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-neutral-600 bg-white border border-neutral-200 rounded hover:text-black"
-                    >
-                      <FiEye className="w-3.5 h-3.5" /> Preview
-                    </button>
-                  </div>
-                </div>
-
-                {/* Editor Content Area (Controlled by State) */}
-                <textarea
-                  rows={8}
-                  value={mdxContent}
-                  onChange={(e) => setMdxContent(e.target.value)}
-                  placeholder={`# Product Overview\n\nWrite in-depth specifications, features, care instructions, or import custom React components directly using MDX syntax...`}
-                  className="w-full p-4 font-mono text-xs sm:text-sm text-neutral-800 placeholder:text-neutral-400 bg-white focus:outline-none resize-y"
-                />
-              </div>
+              <InitializedMDXEditor
+                 editorRef={ref}
+              />
             </div>
           </div>
 
@@ -264,7 +221,7 @@ const AddProductPage = () => {
                       name="original_price"
                       type="number"
                       placeholder="0.00"
-                      onChange={(e) => setOriginalPrice(e.target.value)}
+                      onChange={handleChangeOriginalPrice}
                       className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-neutral-300 rounded-lg text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
                     />
                   </div>
@@ -285,8 +242,7 @@ const AddProductPage = () => {
                     <input
                       id="discount_price"
                       name="discount_price"
-                      onChange={(e) => setDiscounttedPrice(e.target.value)}
-                      onKeyDown={handlechangeDicoutPercent}
+                      onChange={handleChangePrice}
                       value={discounttedPrice}
                       type="number"
                       placeholder="0.00"
@@ -310,7 +266,7 @@ const AddProductPage = () => {
                     <input
                       id="discount"
                       name="discount"
-                      onChange={(e) => setDiscounttedPercent(e.target.value)}
+                      onChange={handleChangePercent}
                       value={discounttedPercent || 0}
                       type="number"
                       placeholder="e.g. 20"

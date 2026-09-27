@@ -46,3 +46,12 @@ svg {
 .range-slider__thumb , .range-slider__range {
   background-color: black !important;
 }
+
+._linkDialogPopoverContent_er3ed_600 {
+  position: relative;
+  z-index: 9999 !important;
+}
+._popupContainer_er3ed_1239 {
+  position: relative;
+  z-index: 9999 !important;
+}
