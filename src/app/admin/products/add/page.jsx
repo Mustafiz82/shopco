@@ -1,6 +1,8 @@
 "use client";
+import axios from "axios";
 import dynamic from "next/dynamic";
 import React, { useEffect, useRef, useState } from "react";
+import { FaPlus } from "react-icons/fa6";
 import {
   FiBold,
   FiItalic,
@@ -14,6 +16,7 @@ import {
   FiArrowLeft,
   FiEye,
 } from "react-icons/fi";
+import { IoMdCloseCircle } from "react-icons/io";
 
 const InitializedMDXEditor = dynamic(
   () => import("@/components/Editor/Editor"),
@@ -29,7 +32,20 @@ const AddProductPage = () => {
   const [discounttedPrice, setDiscounttedPrice] = useState(0);
   const [discounttedPercent, setDiscounttedPercent] = useState(0);
 
+  const [files, setFiles] = useState([])
+
   const ref = useRef()
+
+  const handleChangeFile = (e) => {
+
+    setFiles(prev => [...prev, ...e.target.files])
+
+  }
+
+  const handleRemoveFile = (index) => {
+    setFiles(files.filter((item, idx) => index !== idx))
+
+  }
 
   const handleChangePrice = (e) => {
     let discountedPriceValue = Number(e.target.value);
@@ -69,23 +85,44 @@ const AddProductPage = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-   
-    const productData = {
-      product_name: e.target.product_name.value,
-      short_description: e.target.short_description.value,
-      long_description_mdx: ref.current?.getMarkdown(), 
-      original_price: originalPrice,
-      discount_price: discounttedPrice,
-      discount: discounttedPercent,
-      size: e.target.size.value,
-      color: e.target.color.value,
-      rating: e.target.rating.value,
-    };
 
-    // 3. Console log the collected data object
-    console.log("Submitted Product Data:", productData);
+    // const productData = {
+    //   product_name: e.target.product_name.value,
+    //   short_description: e.target.short_description.value,
+    //   long_description_mdx: ref.current?.getMarkdown(),
+    //   original_price: originalPrice,
+    //   discount_price: discounttedPrice,
+    //   discount: discounttedPercent,
+    //   size: e.target.size.value,
+    //   color: e.target.color.value,
+    //   rating: e.target.rating.value,
+    // };
+
+    // // 3. Console log the collected data object
+    // console.log("Submitted Product Data:", productData);
+    // curl https://api.cloudinary.com/v1_1/demo/image/upload -X POST --data 'file=sample.jpg&upload_preset=unsigned_1'
+
+
+    if (files) {
+
+
+      const imageUrls =  await files.map(async (item) => {
+        const formData = new FormData()
+        formData.append("file", item)
+        formData.append("upload_preset", "shopco")
+        const res = await axios.post("https://api.cloudinary.com/v1_1/dcpjqjkht/image/upload", formData)
+
+        return res.data.secure_url
+      })
+
+      console.log(imageUrls)
+
+
+    }
+
+
   };
 
   return (
@@ -190,13 +227,41 @@ const AddProductPage = () => {
               {/* Editor Container */}
 
               <InitializedMDXEditor
-                 editorRef={ref}
+                editorRef={ref}
               />
             </div>
           </div>
 
           {/* Sidebar Column (1/3 width on large screens) */}
           <div className="space-y-6">
+
+            <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
+              <label htmlFor="file-input">
+                <div className="w-full flex flex-col justify-center items-center gap-2 h-[200px] bg-gray-200">
+
+                  <FaPlus className="text-7xl" />
+                  <p>Upload Images</p>
+
+                </div>
+              </label>
+
+              <div className="flex flex-wrap gap-2 ">
+                {
+                  files?.map((item, index) => <div className="relative">
+                    <img className="w-14 h-14 object-cover mt-3" src={URL.createObjectURL(item)} alt="item" />
+
+                    <IoMdCloseCircle onClick={() => handleRemoveFile(index)} className="absolute cursor-pointer text-red-500 top-0 right-0" />
+                  </div>)
+                }
+
+
+              </div>
+
+              <input onChange={handleChangeFile} className="hidden" multiple type="file" accept="image/*" name="" id="file-input" />
+            </div>
+
+
+
             {/* Pricing Card */}
             <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
               <h2 className="text-base font-semibold uppercase tracking-wider text-neutral-900 mb-5">
